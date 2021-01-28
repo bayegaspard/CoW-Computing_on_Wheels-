@@ -3,9 +3,15 @@ import numpy as np
 import time
 import random
 import math
+import os
+import pandas as pd
+from pandas import ExcelWriter
+from pandas import ExcelFile
 
 
 np.random.seed(1234)
+
+
 
 
 class V2Vchannels:
@@ -73,6 +79,8 @@ class V2Ichannels:
                + np.sqrt(1 - np.exp(-2 * (delta_distance / self.Decorrelation_distance))) * np.random.normal(0, 8, nVeh)
 
 
+
+
 class Vehicle:
     # Vehicle simulator: include all the information for a vehicle
 
@@ -83,6 +91,7 @@ class Vehicle:
         self.acceleration = acceleration
         self.neighbors = []
         self.destinations = []
+
 
 
 class Environ:
@@ -151,8 +160,8 @@ class Environ:
         # initialize channels
         self.V2V_Shadowing = np.random.normal(0, 3, [len(self.vehicles), len(self.vehicles)])
         self.V2I_Shadowing = np.random.normal(0, 8, len(self.vehicles))
-        self.delta_distance = np.asarray([(c.start_velocity*self.time_slow + 0.5*c.acceleration*self.time_slow) for c in self.vehicles])
-
+        self.delta_distance = np.asarray([(c.velocity*self.time_slow + 0.5*c.acceleration*self.time_slow**2) for c in self.vehicles])
+       # self.delta_distance = np.min(self.delta_distance1)
     def renew_positions(self):
         # ===============
         # This function updates the position of each vehicle
@@ -160,7 +169,7 @@ class Environ:
 
         i = 0
         while (i < len(self.vehicles)):
-            delta_distance = self.vehicles[i].velocity * self.time_slow
+            delta_distance = self.vehicles[i].velocity * self.time_slow + 0.5*self.vehicles[i].acceleration*self.time_slow**2
             change_direction = False
             if self.vehicles[i].direction == 'u':
                 # print ('len of position', len(self.position), i)
@@ -188,7 +197,7 @@ class Environ:
                     if (self.vehicles[i].position[1] >= self.left_lanes[j]) and ((self.vehicles[i].position[1] - delta_distance) <= self.left_lanes[j]):  # came to an cross
                         if (np.random.uniform(0, 1) < 0.4):
                             self.vehicles[i].position = [self.vehicles[i].position[0] - (delta_distance - (self.vehicles[i].position[1] - self.left_lanes[j])), self.left_lanes[j]]
-                            # print ('down with left', self.vehicles[i].position)
+                           # print ('down with left', self.vehicles[i].position)
                             self.vehicles[i].direction = 'l'
                             change_direction = True
                             break
@@ -269,15 +278,20 @@ class Environ:
 
         for i in range(len(self.vehicles)):
             self.vehicles[i].neighbors = []
+          #  self.vehicles[i]. =
             self.vehicles[i].actions = []
         z = np.array([[complex(c.position[0], c.position[1]) for c in self.vehicles]])
         Distance = abs(z.T - z)
-
+        Acc = np.array([[c.acceleration for c in self.vehicles]])
+        print(Acc)
         for i in range(len(self.vehicles)):
             sort_idx = np.argsort(Distance[:, i])
+            sort_idx_Acc = np.argsort(Acc[:, i])
             for j in range(self.n_neighbor):
                 self.vehicles[i].neighbors.append(sort_idx[j + 1])
+                self.vehicles[i].acceleration.append(sort_idx_Acc[j + 1])
             destination = self.vehicles[i].neighbors
+
 
             self.vehicles[i].destinations = destination
 

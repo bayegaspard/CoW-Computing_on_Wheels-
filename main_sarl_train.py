@@ -244,7 +244,7 @@ if IS_TRAIN:
             epsi = epsi_final
         if i_episode%100 == 0:
             env.renew_positions() # update vehicle position
-            env.renew_neighbor()
+            #env.renew_neighbor()
             env.renew_channel() # update channel slow fading
             env.renew_channels_fastfading() # update channel fast fading
 
