@@ -282,18 +282,26 @@ class Environ:
             self.vehicles[i].actions = []
         z = np.array([[complex(c.position[0], c.position[1]) for c in self.vehicles]])
         Distance = abs(z.T - z)
-        Acc = np.array([[c.acceleration for c in self.vehicles]])
-        print(Acc)
-        for i in range(len(self.vehicles)):
-            sort_idx = np.argsort(Distance[:, i])
-            sort_idx_Acc = np.argsort(Acc[:, i])
-            for j in range(self.n_neighbor):
-                self.vehicles[i].neighbors.append(sort_idx[j + 1])
-                self.vehicles[i].acceleration.append(sort_idx_Acc[j + 1])
-            destination = self.vehicles[i].neighbors
+        Acc = [c.acceleration for c in self.vehicles]
+        data2 = [(Acc[i:i + 1] * len(Acc)) for i in range(len(Acc))]
+        relative_distance = []
+        for o in range(len(data2)):
+            # print(data2[i])
+            for k, l in zip(range(len(data2)), range(len(data2))):
+                relative_distance.append(Acc[k] - data2[o][l])
+        print(relative_distance.shape())
+      #  print(Distance.shape())
+
+    #       for i in range(len(self.vehicles)):
+ #           sort_idx = np.argsort(Distance[:, i])
+ #           #sort_idx_Acc = np.argsort(Acc[:, i])
+ #           for j in range(self.n_neighbor):
+ #               self.vehicles[i].neighbors.append(sort_idx[j + 1])
+ #               #self.vehicles[i].acceleration.append(sort_idx_Acc[j + 1])
+ #           destination = self.vehicles[i].neighbors
 
 
-            self.vehicles[i].destinations = destination
+  #          self.vehicles[i].destinations = destination
 
     def renew_channel(self):
         """ Renew slow fading channel """
