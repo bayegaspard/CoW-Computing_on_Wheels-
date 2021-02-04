@@ -32,10 +32,10 @@ up_lanes = [i/2.0 for i in [0,0,0,0,0,0]]
 right_lanes = [i/2.0 for i in [0,0,0,0,0,0]]
 
 left_lanes = [i/2.0 for i in [0,0,0,0,0,0]]
-down_lanes = [i/2.0 for i in [4/2,4+4/2,8+4/2,4/2,4+4/2,8+4/2]]
+down_lanes = [i/2.0 for i in [4/2,4+4/2,8+4/2,12+4/2,16+4/2,20+4/2]]
 
-width = 750/2
-height = 1298/2
+width = 0
+height = 2000/20
 
 IS_TRAIN = 1
 IS_TEST = 1-IS_TRAIN

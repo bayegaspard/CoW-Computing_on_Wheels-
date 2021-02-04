@@ -145,17 +145,17 @@ class Environ:
             ind = np.random.randint(0, len(self.down_lanes))
             start_position = [self.down_lanes[ind], np.random.randint(0, self.height)]
             start_direction = 'd' # velocity: 10 ~ 15 m/s, random
-            self.add_new_vehicles(start_position, start_direction, np.random.randint(10, 15), np.random.randint(-4,4))
+            self.add_new_vehicles(start_position, start_direction, np.random.randint(30, 70), np.random.randint(1,6))
 
             start_position = [self.up_lanes[ind], np.random.randint(0, self.height)]
             start_direction = 'u'
-            self.add_new_vehicles(start_position, start_direction, np.random.randint(10, 15), np.random.randint(-4,4))
-            start_position = [np.random.randint(0, self.width), self.left_lanes[ind]]
+            self.add_new_vehicles(start_position, start_direction, np.random.randint(30, 70), np.random.randint(1,6))
+            start_position = [np.random.randint(0, self.height), self.left_lanes[ind]]
             start_direction = 'l'
-            self.add_new_vehicles(start_position, start_direction, np.random.randint(10, 15), np.random.randint(-4,4))
-            start_position = [np.random.randint(0, self.width), self.right_lanes[ind]]
+            self.add_new_vehicles(start_position, start_direction, np.random.randint(30, 70), np.random.randint(1,6))
+            start_position = [np.random.randint(0, self.height), self.right_lanes[ind]]
             start_direction = 'r'
-            self.add_new_vehicles(start_position, start_direction, np.random.randint(10, 15), np.random.randint(-4,4))
+            self.add_new_vehicles(start_position, start_direction, np.random.randint(30, 70), np.random.randint(1,6))
 
         # initialize channels
         self.V2V_Shadowing = np.random.normal(0, 3, [len(self.vehicles), len(self.vehicles)])
@@ -289,19 +289,19 @@ class Environ:
             # print(data2[i])
             for k, l in zip(range(len(data2)), range(len(data2))):
                 relative_distance.append(Acc[k] - data2[o][l])
-        print(relative_distance.shape())
+        print(relative_distance)
       #  print(Distance.shape())
 
-    #       for i in range(len(self.vehicles)):
- #           sort_idx = np.argsort(Distance[:, i])
- #           #sort_idx_Acc = np.argsort(Acc[:, i])
- #           for j in range(self.n_neighbor):
- #               self.vehicles[i].neighbors.append(sort_idx[j + 1])
- #               #self.vehicles[i].acceleration.append(sort_idx_Acc[j + 1])
- #           destination = self.vehicles[i].neighbors
+        for i in range(len(self.vehicles)):
+            sort_idx = np.argsort(Distance[:, i])
+            #sort_idx_Acc = np.argsort(Acc[:, i])
+            for j in range(self.n_neighbor):
+                self.vehicles[i].neighbors.append(sort_idx[j + 1])
+                #self.vehicles[i].acceleration.append(sort_idx_Acc[j + 1])
+            destination = self.vehicles[i].neighbors
 
 
-  #          self.vehicles[i].destinations = destination
+            self.vehicles[i].destinations = destination
 
     def renew_channel(self):
         """ Renew slow fading channel """
