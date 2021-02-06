@@ -11,7 +11,7 @@ import Environment_marl
 import os
 from replay_memory import ReplayMemory
 
-
+np.random.seed(9863456)
 
 my_config = tf.compat.v1.ConfigProto()
 my_config.gpu_options.allow_growth=True

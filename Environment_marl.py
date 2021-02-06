@@ -290,7 +290,7 @@ class Environ:
             for k, l in zip(range(len(data2)), range(len(data2))):
                 relative_distance.append(Acc[k] - data2[o][l])
         print(relative_distance)
-      #  print(Distance.shape())
+        print(Distance)
 
         for i in range(len(self.vehicles)):
             sort_idx = np.argsort(Distance[:, i])
