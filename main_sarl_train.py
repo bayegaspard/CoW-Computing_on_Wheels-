@@ -10,8 +10,10 @@ tf.disable_v2_behavior()
 import Environment_marl
 import os
 from replay_memory import ReplayMemory
+import random
 
-np.random.seed(9863456)
+#seed = random.random()
+#np.random.seed(int(seed))
 
 my_config = tf.compat.v1.ConfigProto()
 my_config.gpu_options.allow_growth=True

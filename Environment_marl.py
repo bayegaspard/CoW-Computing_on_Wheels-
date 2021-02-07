@@ -9,7 +9,7 @@ from pandas import ExcelWriter
 from pandas import ExcelFile
 
 
-np.random.seed(1234)
+
 
 
 
@@ -116,7 +116,7 @@ class Environ:
         self.V2I_channels_abs = []
 
         self.V2I_power_dB = 23  # dBm
-        self.V2V_power_dB_List = [23, 15, 5, -100]  # the power levels
+        self.V2V_power_dB_List = [23, 15, 5, -100]  # the power levels # continuous distribution (decisision variables)
         self.sig2_dB = -114
         self.bsAntGain = 8
         self.bsNoiseFigure = 5
@@ -147,14 +147,17 @@ class Environ:
             start_direction = 'd' # velocity: 10 ~ 15 m/s, random
             self.add_new_vehicles(start_position, start_direction, np.random.randint(30, 70), np.random.randint(1,6))
 
-            start_position = [self.up_lanes[ind], np.random.randint(0, self.height)]
-            start_direction = 'u'
+            ind = np.random.randint(0, len(self.down_lanes))
+            start_position = [self.down_lanes[ind], np.random.randint(0, self.height)]
+            start_direction = 'd' # velocity: 10 ~ 15 m/s, random
             self.add_new_vehicles(start_position, start_direction, np.random.randint(30, 70), np.random.randint(1,6))
-            start_position = [np.random.randint(0, self.height), self.left_lanes[ind]]
-            start_direction = 'l'
+            ind = np.random.randint(0, len(self.down_lanes))
+            start_position = [self.down_lanes[ind], np.random.randint(0, self.height)]
+            start_direction = 'd' # velocity: 10 ~ 15 m/s, random
             self.add_new_vehicles(start_position, start_direction, np.random.randint(30, 70), np.random.randint(1,6))
-            start_position = [np.random.randint(0, self.height), self.right_lanes[ind]]
-            start_direction = 'r'
+            ind = np.random.randint(0, len(self.down_lanes))
+            start_position = [self.down_lanes[ind], np.random.randint(0, self.height)]
+            start_direction = 'd' # velocity: 10 ~ 15 m/s, random
             self.add_new_vehicles(start_position, start_direction, np.random.randint(30, 70), np.random.randint(1,6))
 
         # initialize channels
@@ -283,25 +286,31 @@ class Environ:
         z = np.array([[complex(c.position[0], c.position[1]) for c in self.vehicles]])
         Distance = abs(z.T - z)
         Acc = [c.acceleration for c in self.vehicles]
-        data2 = [(Acc[i:i + 1] * len(Acc)) for i in range(len(Acc))]
-        relative_distance = []
-        for o in range(len(data2)):
-            # print(data2[i])
-            for k, l in zip(range(len(data2)), range(len(data2))):
-                relative_distance.append(Acc[k] - data2[o][l])
-        print(relative_distance)
-        print(Distance)
+        repeated_accl = [(Acc[i:i + 1] * len(Acc)) for i in range(len(Acc))]
+        rel_accel = []
 
+        for o in range(len(repeated_accl)):
+            # print(data2[i])
+            for k, l in zip(range(len(repeated_accl)), range(len(repeated_accl))):
+                rel_accel.append(Acc[k] - repeated_accl[o][l])
+        new_rel_accel = np.reshape(rel_accel, (4,4))
+        nearest_cars = []
+        for t in range(len(new_rel_accel)):
+            for j in range(len(new_rel_accel)):
+                nearest_cars.append((new_rel_accel[t][j] + Distance[t][j]) * 0.5)
+        new_nearest_cars = np.reshape(nearest_cars, (4, 4))
+        list_neighbr = []
         for i in range(len(self.vehicles)):
-            sort_idx = np.argsort(Distance[:, i])
-            #sort_idx_Acc = np.argsort(Acc[:, i])
+            sort_idx = np.argsort(new_nearest_cars[:, i])
             for j in range(self.n_neighbor):
                 self.vehicles[i].neighbors.append(sort_idx[j + 1])
-                #self.vehicles[i].acceleration.append(sort_idx_Acc[j + 1])
-            destination = self.vehicles[i].neighbors
+                list_neighbr.append(sort_idx[j + 1])
+        ourDestination = min(list_neighbr)
+        print(ourDestination)
+        #destination = self.vehicles[i].neighbors
 
 
-            self.vehicles[i].destinations = destination
+        #self.vehicles[i].destinations = destination
 
     def renew_channel(self):
         """ Renew slow fading channel """
