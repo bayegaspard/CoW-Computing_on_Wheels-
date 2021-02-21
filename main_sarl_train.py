@@ -27,13 +27,6 @@ class Agent(object):
 
 
 # ################## SETTINGS ######################
-#up_lanes = [i/2.0 for i in [3.5/2,3.5/2 + 3.5,250+3.5/2, 250+3.5+3.5/2, 500+3.5/2, 500+3.5+3.5/2]]
-#down_lanes = [i/2.0 for i in [250-3.5-3.5/2,250-3.5/2,500-3.5-3.5/2,500-3.5/2,750-3.5-3.5/2,750-3.5/2]]
-#left_lanes = [i/2.0 for i in [3.5/2,3.5/2 + 3.5,433+3.5/2, 433+3.5+3.5/2, 866+3.5/2, 866+3.5+3.5/2]]up_lanes = [i/2.0 for i in [0,0,0,0,0,0]]
-up_lanes = [i/2.0 for i in [0,0,0,0,0,0]]
-right_lanes = [i/2.0 for i in [0,0,0,0,0,0]]
-
-left_lanes = [i/2.0 for i in [0,0,0,0,0,0]]
 down_lanes = [i/2.0 for i in [4/2,4+4/2,8+4/2,12+4/2,16+4/2,20+4/2]]
 
 width = 0
@@ -48,7 +41,7 @@ n_veh = 4
 n_neighbor = 1
 n_RB = n_veh
 
-env = Environment_marl.Environ(down_lanes, up_lanes, left_lanes, right_lanes, width, height, n_veh, n_neighbor)
+env = Environment_marl.Environ(down_lanes, width, height, n_veh, n_neighbor)
 env.new_random_game()  # initialize parameters in env
 
 n_episode = 3000
