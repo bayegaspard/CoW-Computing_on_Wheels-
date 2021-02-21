@@ -85,11 +85,8 @@ class Vehicle:
 
 class Environ:
 
-    def __init__(self, down_lane, up_lane, left_lane, right_lane, width, height, n_veh, n_neighbor):
+    def __init__(self, down_lane, width, height, n_veh, n_neighbor):
         self.down_lanes = down_lane
-       # self.up_lanes = up_lane
-       # self.left_lanes = left_lane
-       # self.right_lanes = right_lane
         self.width = width
         self.height = height
 
