@@ -94,7 +94,7 @@ class Environ:
         self.V2Ichannels = V2Ichannels()
         self.vehicles = []
 
-        self.demand = {self.rc:30, self.size:2 , self.th :5 } # demand by the SE is 30GHz 2M, and a delay of 5ms
+       # self.demand = {self.rc:30, self.size:2 , self.th :5 } # demand by the SE is 30GHz 2M, and a delay of 5ms
         self.V2V_Shadowing = []
         self.V2I_Shadowing = []
         self.delta_distance = []
@@ -440,34 +440,34 @@ class Environ:
         self.demand_rand = self.demand_size * np.ones((self.n_Veh, self.n_neighbor))
         self.individual_time_limit_rand = self.time_slow * np.ones((self.n_Veh, self.n_neighbor))
         self.active_links_rand = np.ones((self.n_Veh, self.n_neighbor), dtype='bool')
-
-    def communication(self, n_veh, demand, p, y, H_total, H_remaining , rc, size, th ):
-        self.n_Veh= n_veh
-        self.rc = rc
-        self.demand = demand
-        self.y = y
-        self.H_total = H_total
-        self.H_remaining = H_remaining
-        self.size = size
-        self.th = th
-        self.p = p
-        self.y = [0,1] # control variable 1 for v2v and 0 for V2I
-        self.H_total = 300 # 300G
-        #self.demand = {self.rc:30, self.size:2 , self.th :5 } # demand by the SE is 30GHz 2M, and a delay of 5ms
-        if self.y==1: # v2v
-            if self.H_total / self.n_veh - self.demand.keys()[self.rc] <= 0:
-                print("Cannot proceed")
-            else:
-                ## execution part here(need to clarify)
-                self.H_remaining = self.H_total - self.demand.keys()[self.rc]
-                self.li = (self.demand.keys()[self.size] * self.demand.keys()[self.rc]) / (self.H_total/self.n_veh)
-        else:
-            if self.y == 0:  # v2I
-                if self.H_total / self.n_veh - self.demand.keys()[self.rc] <= 0:
-                    print("Cannot proceed")
-                else:
-                    self.H_remaining = self.H_total - self.demand.keys()[self.rc]
-                    self.lij = (self.demand.keys()[self.size] * self.demand.keys()[self.rc]) / (self.H_total / self.n_veh)
+    #
+    # def communication(self, n_veh, demand, p, y, H_total, H_remaining , rc, size, th ):
+    #     self.n_Veh= n_veh
+    #     self.rc = rc
+    #     self.demand = demand
+    #     self.y = y
+    #     self.H_total = H_total
+    #     self.H_remaining = H_remaining
+    #     self.size = size
+    #     self.th = th
+    #     self.p = p
+    #     self.y = [0,1] # control variable 1 for v2v and 0 for V2I
+    #     self.H_total = 300 # 300G
+    #     #self.demand = {self.rc:30, self.size:2 , self.th :5 } # demand by the SE is 30GHz 2M, and a delay of 5ms
+    #     if self.y==1: # v2v , for each vehicle randomly select from 30 - 300
+    #         if self.H_total  - self.demand.keys()[self.rc] <= 0:
+    #             print("Cannot proceed")
+    #         else:
+    #             ## execution part here(need to clarify)
+    #             #self.H_remaining = self.H_total - self.demand.keys()[self.rc]
+    #             self.li = (self.demand.keys()[self.size] * self.demand.keys()[self.rc]) / (self.H_total)
+    #     else:
+    #         if self.y == 0:  # v2I for rsu and have a very big htotal , 3000
+    #             if self.H_total / self.n_veh - self.demand.keys()[self.rc] <= 0:
+    #                 print("Cannot proceed")
+    #             else:
+    #                 self.H_remaining = self.H_total - self.demand.keys()[self.rc]
+    #                 self.lij = (self.demand.keys()[self.size] * self.demand.keys()[self.rc]) / (self.H_total / self.n_veh)
 
 
 
