@@ -1,10 +1,6 @@
 from __future__ import division, print_function
-import random
-import scipy
 import scipy.io
 import numpy as np
-
-
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 import Environment_marl
@@ -44,7 +40,7 @@ n_RB = n_veh
 env = Environment_marl.Environ(down_lanes, width, height, n_veh, n_neighbor)
 env.new_random_game()  # initialize parameters in env
 
-n_episode = 3000
+n_episode = 20000
 n_step_per_episode = int(env.time_slow/env.time_fast)
 epsi_final = 0.02
 epsi_anneal_length = int(0.8*n_episode)
@@ -82,7 +78,7 @@ n_hidden_1 = 500
 n_hidden_2 = 250
 n_hidden_3 = 120
 n_input = len(get_state(env=env))
-n_output = n_RB * len(env.V2V_power_dB_List)
+n_output = n_RB * len(env.V2V_multi_action)
 
 g = tf.Graph()
 with g.as_default():
@@ -147,10 +143,10 @@ with g.as_default():
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
 
-
+# Using epsilom greedy strategy, if random > epsilom, exploit, otherwise explore.
 def predict(sess, s_t, ep, test_ep = False):
 
-    n_power_levels = len(env.V2V_power_dB_List)
+    n_power_levels = len(env.V2V_multi_action)
     if np.random.rand() < ep and not test_ep:
         pred_action = np.random.randint(n_RB*n_power_levels)
     else:
@@ -276,6 +272,10 @@ if IS_TRAIN:
             if time_step % target_update_step == target_update_step - 1:
                 update_target_q_network(sess)
                 print('Update target Q network...')
+                print("my reward below")
+                print(record_reward.shape)
+                print(time_step)
+                print("---------")
 
     print('Training Done. Saving models...')
     model_path = label + '/agent'
@@ -284,6 +284,7 @@ if IS_TRAIN:
     current_dir = os.path.dirname(os.path.realpath(__file__))
     reward_path = os.path.join(current_dir, "model/" + label + '/reward.mat')
     scipy.io.savemat(reward_path, {'reward': record_reward})
+
 
     record_loss = np.asarray(record_loss)
     loss_path = os.path.join(current_dir, "model/" + label + '/train_loss.mat')
@@ -338,7 +339,7 @@ if IS_TEST:
             # random baseline
             action_rand = np.zeros([n_veh, n_neighbor, 2], dtype='int32')
             action_rand[:, :, 0] = np.random.randint(0, n_RB, [n_veh, n_neighbor])  # band
-            action_rand[:, :, 1] = np.random.randint(0, len(env.V2V_power_dB_List), [n_veh, n_neighbor])  # power
+            action_rand[:, :, 1] = np.random.randint(0, len(env.V2V_multi_action), [n_veh, n_neighbor])  # power
 
             V2I_rate_rand, V2V_success_rand, V2V_rate_rand = env.act_for_testing_rand(action_rand)
             V2I_rate_per_episode_rand.append(np.sum(V2I_rate_rand))  # sum V2I rate in bps

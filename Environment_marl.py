@@ -95,6 +95,7 @@ class Environ:
         self.vehicles = []
 
        # self.demand = {self.rc:30, self.size:2 , self.th :5 } # demand by the SE is 30GHz 2M, and a delay of 5ms
+       # self.y = [0, 1]  # control variable 1 for v2v and 0 for V2I
         self.V2V_Shadowing = []
         self.V2I_Shadowing = []
         self.delta_distance = []
@@ -102,7 +103,9 @@ class Environ:
         self.V2I_channels_abs = []
 
         self.V2I_power_dB = 23  # dBm
-        self.V2V_power_dB_List = [23, 15, 5, -100]  # the power levels # continuous distribution (decisision variables)
+        self.V2V_h_list = [2,6,9,20]
+        self.V2V_power_dB_List = [23, 15, 5, -100]
+        self.V2V_multi_action = self.V2V_h_list + self.V2V_power_dB_List # the power levels # continuous distribution (decisision variables)
         self.sig2_dB = -114
         self.bsAntGain = 8
         self.bsNoiseFigure = 5
@@ -265,10 +268,10 @@ class Environ:
         self.V2I_channels_with_fastfading = V2I_channels_with_fastfading - 20 * np.log10(
             np.abs(np.random.normal(0, 1, V2I_channels_with_fastfading.shape) + 1j * np.random.normal(0, 1, V2I_channels_with_fastfading.shape))/ math.sqrt(2))
 
-    def Compute_Performance_Reward_Train(self, actions_power):
+    def Compute_Performance_Reward_Train(self, actions_multi):
 
-        actions = actions_power[:, :, 0]  # the channel_selection_part
-        power_selection = actions_power[:, :, 1]  # power selection
+        actions = actions_multi[:, :, 0]  # the channel_selection_part
+        power_selection = actions_multi[:, :, 1]  # power selection
 
         # ------------ Compute V2I rate --------------------
         V2I_Rate = np.zeros(self.n_RB)
@@ -277,7 +280,7 @@ class Environ:
             for j in range(self.n_neighbor):
                 if not self.active_links[i, j]:
                     continue
-                V2I_Interference[actions[i][j]] += 10 ** ((self.V2V_power_dB_List[power_selection[i, j]] - self.V2I_channels_with_fastfading[i, actions[i, j]]
+                V2I_Interference[actions[i][j]] += 10 ** ((self.V2V_multi_action[power_selection[i, j]] - self.V2I_channels_with_fastfading[i, actions[i, j]]
                                                            + self.vehAntGain + self.bsAntGain - self.bsNoiseFigure) / 10)
         self.V2I_Interference = V2I_Interference + self.sig2
         V2I_Signals = 10 ** ((self.V2I_power_dB - self.V2I_channels_with_fastfading.diagonal() + self.vehAntGain + self.bsAntGain - self.bsNoiseFigure) / 10)
@@ -291,7 +294,7 @@ class Environ:
             indexes = np.argwhere(actions == i)  # find spectrum-sharing V2Vs
             for j in range(len(indexes)):
                 receiver_j = self.vehicles[indexes[j, 0]].destinations[indexes[j, 1]]
-                V2V_Signal[indexes[j, 0], indexes[j, 1]] = 10 ** ((self.V2V_power_dB_List[power_selection[indexes[j, 0], indexes[j, 1]]]
+                V2V_Signal[indexes[j, 0], indexes[j, 1]] = 10 ** ((self.V2V_multi_action[power_selection[indexes[j, 0], indexes[j, 1]]]
                                                                    - self.V2V_channels_with_fastfading[indexes[j][0], receiver_j, i] + 2 * self.vehAntGain - self.vehNoiseFigure) / 10)
                 # V2I links interference to V2V links
                 V2V_Interference[indexes[j, 0], indexes[j, 1]] += 10 ** ((self.V2I_power_dB - self.V2V_channels_with_fastfading[i, receiver_j, i] + 2 * self.vehAntGain - self.vehNoiseFigure) / 10)
@@ -299,9 +302,9 @@ class Environ:
                 #  V2V interference
                 for k in range(j + 1, len(indexes)):  # spectrum-sharing V2Vs
                     receiver_k = self.vehicles[indexes[k][0]].destinations[indexes[k][1]]
-                    V2V_Interference[indexes[j, 0], indexes[j, 1]] += 10 ** ((self.V2V_power_dB_List[power_selection[indexes[k, 0], indexes[k, 1]]]
+                    V2V_Interference[indexes[j, 0], indexes[j, 1]] += 10 ** ((self.V2V_multi_action[power_selection[indexes[k, 0], indexes[k, 1]]]
                                                                               - self.V2V_channels_with_fastfading[indexes[k][0]][receiver_j][i] + 2 * self.vehAntGain - self.vehNoiseFigure) / 10)
-                    V2V_Interference[indexes[k, 0], indexes[k, 1]] += 10 ** ((self.V2V_power_dB_List[power_selection[indexes[j, 0], indexes[j, 1]]]
+                    V2V_Interference[indexes[k, 0], indexes[k, 1]] += 10 ** ((self.V2V_multi_action[power_selection[indexes[j, 0], indexes[j, 1]]]
                                                                               - self.V2V_channels_with_fastfading[indexes[j][0]][receiver_k][i] + 2 * self.vehAntGain - self.vehNoiseFigure) / 10)
         self.V2V_Interference = V2V_Interference + self.sig2
         V2V_Rate = np.log2(1 + np.divide(V2V_Signal, self.V2V_Interference))
@@ -318,11 +321,11 @@ class Environ:
 
         return V2I_Rate, V2V_Rate, reward_elements
 
-    def Compute_Performance_Reward_Test_rand(self, actions_power):
+    def Compute_Performance_Reward_Test_rand(self, actions_multi):
         """ for random baseline computation """
 
-        actions = actions_power[:, :, 0]  # the channel_selection_part
-        power_selection = actions_power[:, :, 1]  # power selection
+        actions = actions_multi[:, :, 0]  # the channel_selection_part
+        power_selection = actions_multi[:, :, 1]  # power selection
 
         # ------------ Compute V2I rate --------------------
         V2I_Rate = np.zeros(self.n_RB)
@@ -331,7 +334,7 @@ class Environ:
             for j in range(self.n_neighbor):
                 if not self.active_links_rand[i, j]:
                     continue
-                V2I_Interference[actions[i][j]] += 10 ** ((self.V2V_power_dB_List[power_selection[i, j]] - self.V2I_channels_with_fastfading[i, actions[i, j]]
+                V2I_Interference[actions[i][j]] += 10 ** ((self.V2V_multi_action[power_selection[i, j]] - self.V2I_channels_with_fastfading[i, actions[i, j]]
                                                            + self.vehAntGain + self.bsAntGain - self.bsNoiseFigure) / 10)
         self.V2I_Interference_random = V2I_Interference + self.sig2
         V2I_Signals = 10 ** ((self.V2I_power_dB - self.V2I_channels_with_fastfading.diagonal() + self.vehAntGain + self.bsAntGain - self.bsNoiseFigure) / 10)
@@ -345,7 +348,7 @@ class Environ:
             indexes = np.argwhere(actions == i)  # find spectrum-sharing V2Vs
             for j in range(len(indexes)):
                 receiver_j = self.vehicles[indexes[j, 0]].destinations[indexes[j, 1]]
-                V2V_Signal[indexes[j, 0], indexes[j, 1]] = 10 ** ((self.V2V_power_dB_List[power_selection[indexes[j, 0], indexes[j, 1]]]
+                V2V_Signal[indexes[j, 0], indexes[j, 1]] = 10 ** ((self.V2V_multi_action[power_selection[indexes[j, 0], indexes[j, 1]]]
                                                                    - self.V2V_channels_with_fastfading[indexes[j][0], receiver_j, i] + 2 * self.vehAntGain - self.vehNoiseFigure) / 10)
                 # V2I links interference to V2V links
                 V2V_Interference[indexes[j, 0], indexes[j, 1]] += 10 ** ((self.V2I_power_dB - self.V2V_channels_with_fastfading[i, receiver_j, i] + 2 * self.vehAntGain - self.vehNoiseFigure) / 10)
@@ -353,9 +356,9 @@ class Environ:
                 #  V2V interference
                 for k in range(j + 1, len(indexes)):  # spectrum-sharing V2Vs
                     receiver_k = self.vehicles[indexes[k][0]].destinations[indexes[k][1]]
-                    V2V_Interference[indexes[j, 0], indexes[j, 1]] += 10 ** ((self.V2V_power_dB_List[power_selection[indexes[k, 0], indexes[k, 1]]]
+                    V2V_Interference[indexes[j, 0], indexes[j, 1]] += 10 ** ((self.V2V_multi_action[power_selection[indexes[k, 0], indexes[k, 1]]]
                                                                               - self.V2V_channels_with_fastfading[indexes[k][0]][receiver_j][i] + 2 * self.vehAntGain - self.vehNoiseFigure) / 10)
-                    V2V_Interference[indexes[k, 0], indexes[k, 1]] += 10 ** ((self.V2V_power_dB_List[power_selection[indexes[j, 0], indexes[j, 1]]]
+                    V2V_Interference[indexes[k, 0], indexes[k, 1]] += 10 ** ((self.V2V_multi_action[power_selection[indexes[j, 0], indexes[j, 1]]]
                                                                               - self.V2V_channels_with_fastfading[indexes[j][0]][receiver_k][i] + 2 * self.vehAntGain - self.vehNoiseFigure) / 10)
         self.V2V_Interference_random = V2V_Interference + self.sig2
         V2V_Rate = np.log2(1 + np.divide(V2V_Signal, self.V2V_Interference_random))
@@ -390,7 +393,7 @@ class Environ:
                         # if i == k or channel_selection[i,j] >= 0:
                         if i == k and j == m or channel_selection[i, j] < 0:
                             continue
-                        V2V_Interference[k, m, channel_selection[i, j]] += 10 ** ((self.V2V_power_dB_List[power_selection[i, j]]
+                        V2V_Interference[k, m, channel_selection[i, j]] += 10 ** ((self.V2V_multi_action[power_selection[i, j]]
                                                                                    - self.V2V_channels_with_fastfading[i][self.vehicles[k].destinations[m]][channel_selection[i,j]] + 2 * self.vehAntGain - self.vehNoiseFigure) / 10)
         self.V2V_Interference_all = 10 * np.log10(V2V_Interference)
 
@@ -441,33 +444,32 @@ class Environ:
         self.individual_time_limit_rand = self.time_slow * np.ones((self.n_Veh, self.n_neighbor))
         self.active_links_rand = np.ones((self.n_Veh, self.n_neighbor), dtype='bool')
     #
-    # def communication(self, n_veh, demand, p, y, H_total, H_remaining , rc, size, th ):
-    #     self.n_Veh= n_veh
-    #     self.rc = rc
-    #     self.demand = demand
-    #     self.y = y
-    #     self.H_total = H_total
-    #     self.H_remaining = H_remaining
-    #     self.size = size
-    #     self.th = th
-    #     self.p = p
-    #     self.y = [0,1] # control variable 1 for v2v and 0 for V2I
-    #     self.H_total = 300 # 300G
-    #     #self.demand = {self.rc:30, self.size:2 , self.th :5 } # demand by the SE is 30GHz 2M, and a delay of 5ms
-    #     if self.y==1: # v2v , for each vehicle randomly select from 30 - 300
-    #         if self.H_total  - self.demand.keys()[self.rc] <= 0:
-    #             print("Cannot proceed")
-    #         else:
-    #             ## execution part here(need to clarify)
-    #             #self.H_remaining = self.H_total - self.demand.keys()[self.rc]
-    #             self.li = (self.demand.keys()[self.size] * self.demand.keys()[self.rc]) / (self.H_total)
-    #     else:
-    #         if self.y == 0:  # v2I for rsu and have a very big htotal , 3000
-    #             if self.H_total / self.n_veh - self.demand.keys()[self.rc] <= 0:
-    #                 print("Cannot proceed")
-    #             else:
-    #                 self.H_remaining = self.H_total - self.demand.keys()[self.rc]
-    #                 self.lij = (self.demand.keys()[self.size] * self.demand.keys()[self.rc]) / (self.H_total / self.n_veh)
+    def computation(self, n_veh, demand, p, y, H_total, H_remaining , rc, size, th ):
+        self.n_Veh= n_veh
+        self.rc = rc
+        self.demand = demand
+        self.y = y
+        self.H_total = H_total
+        self.H_remaining = H_remaining
+        self.size = size
+        self.th = th
+        self.p = p
+        self.H_total = 300 # 300G
+        #self.demand = {self.rc:30, self.size:2 , self.th :5 } # demand by the SE is 30GHz 2M, and a delay of 5ms
+        if self.y==1: # v2v , for each vehicle randomly select from 30 - 300
+            if self.H_total  - self.demand.keys()[self.rc] <= 0:
+                print("Cannot proceed")
+            else:
+                ## execution part here(need to clarify)
+                #self.H_remaining = self.H_total - self.demand.keys()[self.rc]
+                self.li = (self.demand.keys()[self.size] * self.demand.keys()[self.rc]) / (self.H_total)
+        else:
+            if self.y == 0:  # v2I for rsu and have a very big htotal , 3000
+                if self.H_total / self.n_veh - self.demand.keys()[self.rc] <= 0:
+                    print("Cannot proceed")
+                else:
+                    self.H_remaining = self.H_total - self.demand.keys()[self.rc]
+                    self.lij = (self.demand.keys()[self.size] * self.demand.keys()[self.rc]) / (self.H_total / self.n_veh)
 
 
 
